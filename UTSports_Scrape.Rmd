@@ -1,0 +1,350 @@
+---
+title: "UTK Football Web Scrape"
+author: "Me"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r message=FALSE}
+library(httr)
+library(rvest)
+library(data.table)
+library(robotstxt)
+```
+
+```{r}
+paths_allowed("https://utsports.com/sports/football")
+rtxt <- robotstxt(domain="utsports.com")
+rtxt
+```
+
+```{r}
+get_url <- "https://utsports.com/sports/football/stats/2021"
+response <- GET(get_url)
+stop_for_status(response)
+
+html_page <- content(response)
+df_list <- html_table(html_page)
+length(df_list)
+```
+
+```{r}
+years <- 1994:2022
+
+TeamStatsF <- vector("list", length(years))
+IndividualOffenseRushingF <- vector("list", length(years))
+IndividualOffensePassingF <- vector("list", length(years))
+IndividualOffenseReceivingF <- vector("list", length(years))
+IndividualDefenseF <- vector("list", length(years))
+IndividualKickingPuntsF <- vector("list", length(years))
+IndividualKickingFieldGoalsF <- vector("list", length(years))
+IndividualKickingKickoffsF <- vector("list", length(years))
+IndividualReturnsPuntsF <- vector("list", length(years))
+IndividualReturnsKickoffsF <- vector("list", length(years))
+IndividualScoringF <- vector("list", length(years))
+GameResultsF <- vector("list", length(years))
+TeamOffenseF <- vector("list", length(years))
+TeamDefenseF <- vector("list", length(years))
+TeamKickingF <- vector("list", length(years))
+OpponentOffenseF <- vector("list", length(years))
+OpponentDefenseF <- vector("list", length(years))
+OpponentKickingF <- vector("list", length(years))
+GameComparisonF <- vector("list", length(years))
+GameComparison2F <- vector("list", length(years))
+InsideOppRedZoneF <- vector("list", length(years))
+OppInsideOurRedZoneF <- vector("list", length(years))
+IndividualHighlightF <- vector("list", length(years))
+TeamHighlightF <- vector("list", length(years))
+OppIndividualHighlightF <- vector("list", length(years))
+OppTeamHighlightF <- vector("list", length(years))
+ParticipationF <- vector("list", length(years))
+i <- 1
+
+for (year in years) {
+  get_url <- paste0("https://utsports.com/sports/football/stats/", year)
+  response <- GET(get_url)
+  stop_for_status(response)
+  html_page <- content(response)
+  df_list <- html_table(html_page)
+  
+
+  TeamStats <- df_list[[1]]
+  TeamStats <- t(TeamStats)
+  colnames(TeamStats) <- TeamStats[1,]
+  TeamStats <- TeamStats[-1,]
+  TeamStats <- as.data.frame(TeamStats)
+  TeamStats$Season <- year
+
+  TeamStats <- TeamStats[,-1]
+  names(TeamStats)[c(1,2)] = paste("Scoring:", colnames(TeamStats[,c(2,3)]), sep = " ")
+  TeamStats <- TeamStats[,-3]
+  names(TeamStats)[c(3,4,5,6)] = paste("First Downs:", colnames(TeamStats[,c(3,4,5,6)]), sep = " ")
+  TeamStats <- TeamStats[,-7]
+  names(TeamStats)[c(7,8,9,10,11,12,13)] = paste("Rushing:", colnames(TeamStats[,c(7,8,9,10,11,12,13)]), sep = " ")
+  TeamStats <- TeamStats[,-14]
+  names(TeamStats)[c(14,15,16,17,18)] = paste("Passing:", colnames(TeamStats[,c(14,15,16,17,18)]), sep = " ")
+  TeamStats <- TeamStats[,-19]
+  names(TeamStats)[c(19,20,21,22,23)] = paste("Total Offense:", colnames(TeamStats[,c(19,20,21,22,23)]), sep = " ")
+  TeamStats <- TeamStats[,-24]
+  names(TeamStats)[c(24,25,26,27,28,29)] = paste("Returns:", colnames(TeamStats[,c(24,25,26,27,28,29)]), sep = " ")
+  TeamStats <- TeamStats[,-30]
+  names(TeamStats)[c(30,31,32,33,34)] = paste("Kicking:", colnames(TeamStats[,c(30,31,32,33,34)]), sep = " ")
+  TeamStats <- TeamStats[,-35]
+  names(TeamStats)[c(35,36)] = paste("Penalties:", colnames(TeamStats[,c(35,36)]), sep = " ")
+  TeamStats <- TeamStats[,-37]
+  names(TeamStats)[c(37,38)] = paste("Time of Possession:", colnames(TeamStats[,c(37,38)]), sep = " ")
+  TeamStats <- TeamStats[,-39]
+  names(TeamStats)[c(39,40,41,42,43,44,45,46)] = paste("Misc:", colnames(TeamStats[,c(39,40,41,42,43,44,45,46)]), sep = " ")
+
+  TeamStatsF[i] <- list(TeamStats)
+  
+  IndividualOffenseRushing <- df_list[[2]]
+  IndividualOffenseRushing$Season <- year
+  IndividualOffenseRushing$`Bio Link` <- NULL
+  IndividualOffenseRushing$Player <- sub("\r\n.*$", "", IndividualOffenseRushing$Player)
+  
+  IndividualOffenseRushingF[i] <- list(IndividualOffenseRushing)
+  
+  IndividualOffensePassing <- df_list[[3]]
+  IndividualOffensePassing$Season <- year
+  IndividualOffensePassing$`Bio Link` <- NULL
+  IndividualOffensePassing$Player <- sub("\r\n.*$", "", IndividualOffensePassing$Player)
+  
+  IndividualOffensePassingF[i] <- list(IndividualOffensePassing)
+  
+  IndividualOffenseReceiving <- df_list[[4]]
+  IndividualOffenseReceiving$Season <- year
+  IndividualOffenseReceiving$`Bio Link` <- NULL
+  IndividualOffenseReceiving$Player <- sub("\r\n.*$", "", IndividualOffenseReceiving$Player)
+  
+  IndividualOffenseReceivingF[i] <- list(IndividualOffenseReceiving)
+  
+  IndividualDefense <- df_list[[5]]
+  IndividualDefense$Season <- year
+  IndividualDefense$`Bio Link` <- NULL
+  IndividualDefense$Player <- sub("\r\n.*$", "", IndividualDefense$Player)
+  
+  IndividualDefenseF[i] <- list(IndividualDefense)
+  
+  IndividualKickingPunts <- df_list[[6]]
+  IndividualKickingPunts$Season <- year
+  IndividualKickingPunts$`Bio Link` <- NULL
+  IndividualKickingPunts$Player <- sub("\r\n.*$", "", IndividualKickingPunts$Player)
+  
+  IndividualKickingPuntsF[i] <- list(IndividualKickingPunts)
+  
+  IndividualKickingFieldGoals <- df_list[[7]]
+  IndividualKickingFieldGoals$Season <- year
+  IndividualKickingFieldGoals$`Bio Link` <- NULL
+  IndividualKickingFieldGoals$Player <- sub("\r\n.*$", "", IndividualKickingFieldGoals$Player)
+  
+  IndividualKickingFieldGoalsF[i] <- list(IndividualKickingFieldGoals)
+  
+  IndividualKickingKickoffs <- df_list[[8]]
+  IndividualKickingKickoffs$Season <- year
+  IndividualKickingKickoffs$`Bio Link` <- NULL
+  IndividualKickingKickoffs$Player <- sub("\r\n.*$", "", IndividualKickingKickoffs$Player)
+  
+  IndividualKickingKickoffsF[i] <- list(IndividualKickingKickoffs)
+  
+  IndividualReturnsPunts <- df_list[[9]]
+  IndividualReturnsPunts$Season <- year
+  IndividualReturnsPunts$`Bio Link` <- NULL
+  IndividualReturnsPunts$Player <- sub("\r\n.*$", "", IndividualReturnsPunts$Player)
+  
+  IndividualReturnsPuntsF[i] <- list(IndividualReturnsPunts)
+  
+  IndividualReturnsKickoffs <- df_list[[10]]
+  IndividualReturnsKickoffs$Season <- year
+  IndividualReturnsKickoffs$`Bio Link` <- NULL
+  IndividualReturnsKickoffs$Player <- sub("\r\n.*$", "", IndividualReturnsKickoffs$Player)
+  
+  IndividualReturnsKickoffsF[i] <- list(IndividualReturnsKickoffs)
+  
+  IndividualScoring <- df_list[[11]]
+  IndividualScoring$Season <- year
+  IndividualScoring$`Bio Link` <- NULL
+  IndividualScoring$Player <- sub("\r\n.*$", "", IndividualScoring$Player)
+  
+  colnames(IndividualScoring)[1:11] <- as.character(IndividualScoring[1, ])
+  IndividualScoring <- IndividualScoring[-1, ]
+  colnames(IndividualScoring)[6:10] <- paste("Points After Touchdown ", colnames(IndividualScoring)[6:10], sep = "")
+  
+  IndividualScoringF[i] <- list(IndividualScoring)
+  
+  GameResults <- df_list[[12]]
+  GameResults$Season <- year
+  GameResults <- GameResults[-which(GameResults$Opponent==""), ]
+  
+  GameResultsF[i] <- list(GameResults)
+  
+  TeamOffense <- df_list[[13]]
+  TeamOffense$Season <- year
+  
+  colnames(TeamOffense)[1:21] <- as.character(TeamOffense[1, ])
+  TeamOffense <- TeamOffense[-1, ]
+  colnames(TeamOffense)[3:6] <- paste("Rushing ", colnames(TeamOffense)[3:6], sep = "")
+  colnames(TeamOffense)[7:10] <- paste("Receiving ", colnames(TeamOffense)[7:10], sep = "")
+  colnames(TeamOffense)[11:13] <- paste("Passing ", colnames(TeamOffense)[11:13], sep = "")
+  colnames(TeamOffense)[14:17] <- paste("Kick Returns ", colnames(TeamOffense)[14:17], sep = "")
+  colnames(TeamOffense)[18:21] <- paste("Punt Returns ", colnames(TeamOffense)[18:21], sep = "")
+  
+  TeamOffenseF[i] <- list(TeamOffense)
+  
+  TeamDefense <- df_list[[14]]
+  TeamDefense$Season <- year
+  
+  colnames(TeamDefense)[1:18] <- as.character(TeamDefense[1, ])
+  TeamDefense <- TeamDefense[-1, ]
+  colnames(TeamDefense)[3:7] <- paste("Tackles ", colnames(TeamDefense)[3:7], sep = "")
+  colnames(TeamDefense)[8:9] <- paste("Sacks ", colnames(TeamDefense)[8:9], sep = "")
+  colnames(TeamDefense)[10:12] <- paste("Fumble ", colnames(TeamDefense)[10:12], sep = "")
+  colnames(TeamDefense)[13:14] <- paste("INT ", colnames(TeamDefense)[13:14], sep = "")
+  
+  TeamDefenseF[i] <- list(TeamDefense)
+  
+  TeamKicking <- df_list[[15]]
+  TeamKicking$Season <- year
+  
+  colnames(TeamKicking)[1:19] <- as.character(TeamKicking[1, ])
+  TeamKicking <- TeamKicking[-1, ]
+  colnames(TeamKicking)[3:11] <- paste("Punting ", colnames(TeamKicking)[3:11], sep = "")
+  colnames(TeamKicking)[12:14] <- paste("Field Goals ", colnames(TeamKicking)[12:14], sep = "")
+  colnames(TeamKicking)[15:19] <- paste("Kickoffs ", colnames(TeamKicking)[15:19], sep = "")
+  
+  TeamKickingF[i] <- list(TeamKicking)
+  
+  OpponentOffense <- df_list[[16]]
+  OpponentOffense$Season <- year
+  
+  colnames(OpponentOffense)[1:21] <- as.character(OpponentOffense[1, ])
+  OpponentOffense <- OpponentOffense[-1, ]
+  colnames(OpponentOffense)[3:6] <- paste("Rushing ", colnames(OpponentOffense)[3:6], sep = "")
+  colnames(OpponentOffense)[7:10] <- paste("Receiving ", colnames(OpponentOffense)[7:10], sep = "")
+  colnames(OpponentOffense)[11:13] <- paste("Passing ", colnames(OpponentOffense)[11:13], sep = "")
+  colnames(OpponentOffense)[14:17] <- paste("Kick Returns ", colnames(OpponentOffense)[14:17], sep = "")
+  colnames(OpponentOffense)[18:21] <- paste("Punt Returns ", colnames(OpponentOffense)[18:21], sep = "")
+  
+  OpponentOffenseF[i] <- list(OpponentOffense)
+  
+  OpponentDefense <- df_list[[17]]
+  OpponentDefense$Season <- year
+  
+  colnames(OpponentDefense)[1:18] <- as.character(OpponentDefense[1, ])
+  OpponentDefense <- OpponentDefense[-1, ]
+  colnames(OpponentDefense)[3:7] <- paste("Tackles ", colnames(OpponentDefense)[3:7], sep = "")
+  colnames(OpponentDefense)[8:9] <- paste("Sacks ", colnames(OpponentDefense)[8:9], sep = "")
+  colnames(OpponentDefense)[10:12] <- paste("Fumble ", colnames(OpponentDefense)[10:12], sep = "")
+  colnames(OpponentDefense)[13:14] <- paste("INT ", colnames(OpponentDefense)[13:14], sep = "")
+  
+  OpponentDefenseF[i] <- list(OpponentDefense)
+  
+  OpponentKicking <- df_list[[18]]
+  OpponentKicking$Season <- year
+  
+  colnames(OpponentKicking)[1:19] <- as.character(OpponentKicking[1, ])
+  OpponentKicking <- OpponentKicking[-1, ]
+  colnames(OpponentKicking)[3:11] <- paste("Punting ", colnames(OpponentKicking)[3:11], sep = "")
+  colnames(OpponentKicking)[12:14] <- paste("Field Goals ", colnames(OpponentKicking)[12:14], sep = "")
+  colnames(OpponentKicking)[15:19] <- paste("Kickoffs ", colnames(OpponentKicking)[15:19], sep = "")
+  
+  OpponentKickingF[i] <- list(OpponentKicking)
+  
+  GameComparison <- df_list[[19]]
+  GameComparison$Season <- year
+  
+  colnames(GameComparison)[1:11] <- as.character(GameComparison[1, ])
+  GameComparison <- GameComparison[-1, ]
+  colnames(GameComparison)[3:6] <- paste("First Downs ", colnames(GameComparison)[3:11], sep = "")
+  colnames(GameComparison)[7] <- paste("Rushing ", colnames(GameComparison)[7], sep = "")
+  colnames(GameComparison)[8:9] <- paste("Passing ", colnames(GameComparison)[8:9], sep = "")
+  
+  GameComparisonF[i] <- list(GameComparison)
+  
+  GameComparison2 <- df_list[[20]]
+  GameComparison2$Season <- year
+  
+  GameComparison2F[i] <- list(GameComparison2)
+  
+  InsideOppRedZone <- df_list[[21]]
+  InsideOppRedZone$Season <- year
+  
+  colnames(InsideOppRedZone)[1:17] <- as.character(InsideOppRedZone[1, ])
+  InsideOppRedZone <- InsideOppRedZone[-1, ]
+  colnames(InsideOppRedZone)[8:10] <- paste("TDS ", colnames(InsideOppRedZone)[8:10], sep = "")
+  colnames(InsideOppRedZone)[11:12] <- paste("FGS ", colnames(InsideOppRedZone)[11:12], sep = "")
+  colnames(InsideOppRedZone)[13:17] <- paste("Failed to Score ", colnames(InsideOppRedZone)[13:17], sep = "")
+  
+  InsideOppRedZoneF[i] <- list(InsideOppRedZone)
+  
+  OppInsideOurRedZone <- df_list[[22]]
+  OppInsideOurRedZone$Season <- year
+  
+  colnames(OppInsideOurRedZone)[1:17] <- as.character(OppInsideOurRedZone[1, ])
+  OppInsideOurRedZone <- OppInsideOurRedZone[-1, ]
+  colnames(OppInsideOurRedZone)[8:10] <- paste("TDS ", colnames(OppInsideOurRedZone)[8:10], sep = "")
+  colnames(OppInsideOurRedZone)[11:12] <- paste("FGS ", colnames(OppInsideOurRedZone)[11:12], sep = "")
+  colnames(OppInsideOurRedZone)[13:17] <- paste("Failed to Score ", colnames(OppInsideOurRedZone)[13:17], sep = "")
+  
+  OppInsideOurRedZoneF[i] <- list(OppInsideOurRedZone)
+  
+  IndividualHighlight <- df_list[[23]]
+  IndividualHighlight$Season <- year
+  
+  IndividualHighlightF[i] <- list(IndividualHighlight)
+  
+  TeamHighlight <- df_list[[24]]
+  TeamHighlight$Season <- year
+  
+  TeamHighlightF[i] <- list(TeamHighlight)
+  
+  OppIndividualHighlight <- df_list[[25]]
+  OppIndividualHighlight$Season <- year
+  
+  OppIndividualHighlightF[i] <- list(OppIndividualHighlight)
+  
+  OppTeamHighlight <- df_list[[26]]
+  OppTeamHighlight$Season <- year
+  
+  OppTeamHighlightF[i] <- list(OppTeamHighlight)
+  
+  Participation <- df_list[[27]]
+  Participation$Season <- year
+  
+  ParticipationF[i] <- list(Participation)
+  
+  i <- i + 1
+}
+
+```
+
+```{r}
+TeamStatsC <- as.data.frame(do.call(rbind, TeamStatsF))
+IndividualOffenseRushingC <- as.data.frame(do.call(rbind, IndividualOffenseRushingF))
+IndividualOffensePassingC <- as.data.frame(do.call(rbind, IndividualOffensePassingF))
+IndividualOffenseReceivingC <- as.data.frame(do.call(rbind, IndividualOffenseReceivingF))
+IndividualDefenseC <- as.data.frame(do.call(rbind, IndividualDefenseF))
+IndividualKickingPuntsC <- as.data.frame(do.call(rbind, IndividualKickingPuntsF))
+IndividualKickingFieldGoalsC <- as.data.frame(do.call(rbind, IndividualKickingFieldGoalsF))
+IndividualKickingKickoffsC <- as.data.frame(do.call(rbind, IndividualKickingKickoffsF))
+IndividualReturnsPuntsC <- as.data.frame(do.call(rbind, IndividualReturnsPuntsF))
+IndividualReturnsKickoffsC <- as.data.frame(do.call(rbind, IndividualReturnsKickoffsF))
+IndividualScoringC <- as.data.frame(do.call(rbind, IndividualScoringF))
+GameResultsC <- as.data.frame(do.call(rbind, GameResultsF))
+TeamOffenseC <- as.data.frame(do.call(rbind, TeamOffenseF))
+TeamDefenseC <- as.data.frame(do.call(rbind, TeamDefenseF))
+TeamKickingC <- as.data.frame(do.call(rbind, TeamKickingF))
+OpponentOffenseC <- as.data.frame(do.call(rbind, OpponentOffenseF))
+OpponentDefenseC <- as.data.frame(do.call(rbind, OpponentDefenseF))
+OpponentKickingC <- as.data.frame(do.call(rbind, OpponentKickingF))
+GameComparisonC <- as.data.frame(do.call(rbind, GameComparisonF))
+GameComparison2C <- as.data.frame(do.call(rbind, GameComparison2F))
+InsideOppRedZoneC <- as.data.frame(do.call(rbind, InsideOppRedZoneF))
+OppInsideOurRedZoneC <- as.data.frame(do.call(rbind, OppInsideOurRedZoneF))
+IndividualHighlightC <- as.data.frame(do.call(rbind, IndividualHighlight))
+TeamHighlightC <- as.data.frame(do.call(rbind, TeamHighlightF))
+OppIndividualHighlightC <- as.data.frame(do.call(rbind, OppIndividualHighlightF))
+OppTeamHighlightC <- as.data.frame(do.call(rbind, OppTeamHighlightF))
+ParticipationC <- as.data.frame(do.call(rbind, ParticipationF))
+
+```
