@@ -1,0 +1,618 @@
+---
+title: "UTK Football Cleaning"
+author: "Me"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
+library(lubridate)
+```
+
+```{r}
+GameResults <- read.csv(file = "GameResults.csv")
+
+GameResults[GameResults == ""] <- NA
+
+GameResults$Coach <- ifelse(GameResults$Season %in% c(1992:2008), "Phillip Fulmer", 
+                     ifelse(GameResults$Season == 2009, "Lane Kiffin", 
+                            ifelse(GameResults$Season %in% c(2010:2012), "Derek Dooley",
+                                   ifelse(GameResults$Season %in% c(2013:2017), "Butch Jones",
+                                          ifelse(GameResults$Season %in% c(2018:2020), "Jeremy Pruitt","Josh Heupel")
+                                          ))))
+
+GameResults$UTKScore <- sapply(GameResults$Score, function(x) sub("-.*", "", x))
+GameResults$OppScore <- sapply(GameResults$Score, function(x) sub(".*-", "", x))
+
+GameResults$UTKRecord <- sapply(GameResults$Record, function(x) sub(",.*", "", x))
+GameResults$OppRecord <- sapply(GameResults$Record, function(x) sub(".*,", "", x))
+
+GameResults$Location <- substr(GameResults$Opponent, 1, 2)
+GameResults$Location <- ifelse(GameResults$Location=="at", "Away", "Home") 
+
+GameResults$Month <- as.character(month(mdy(GameResults$Date),label = TRUE))
+
+GameResults$Opponent <- sub("...", "", GameResults$Opponent)
+
+which(grepl(";", GameResults$Duration)==TRUE)
+GameResults$Duration[9] <- "3:17"
+
+GameResults[4:5] <- c()
+
+#write.csv(GameResults, "GameResults.csv", row.names = FALSE)
+```
+
+```{r}
+GameComparison <- read.csv(file = "GameComparison.csv")
+
+GameComparison[GameComparison == ""] <- NA
+
+GameComparison$Location <- GameResults$Location
+GameComparison$Date  <- GameResults$Date
+GameComparison$Result  <- GameResults$Result
+
+GameComparison$UTKScore <- ifelse(
+  GameComparison$Location == "Home",
+  sapply(GameComparison$Score, function(x) sub("-.*", "", x)),
+  sapply(GameComparison$Score, function(x) sub(".*-", "", x))
+)
+
+GameComparison$OppScore <- ifelse(
+  GameComparison$Location == "Away",
+  sapply(GameComparison$Score, function(x) sub("-.*", "", x)),
+  sapply(GameComparison$Score, function(x) sub(".*-", "", x))
+)
+
+GameComparison$UTKTotalFirstDowns <- ifelse(
+  GameComparison$Location == "Home",
+  sapply(GameComparison$First.Downs.Total, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$First.Downs.Total, function(x) sub(".*/", "", x))
+)
+
+GameComparison$OppTotalFirstDowns <- ifelse(
+  GameComparison$Location == "Away",
+  sapply(GameComparison$First.Downs.Total, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$First.Downs.Total, function(x) sub(".*/", "", x))
+)
+
+GameComparison$UTKRushFirstDowns <- ifelse(
+  GameComparison$Location == "Home",
+  sapply(GameComparison$First.Downs.Rush, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$First.Downs.Rush, function(x) sub(".*/", "", x))
+)
+
+GameComparison$OppRushFirstDowns <- ifelse(
+  GameComparison$Location == "Away",
+  sapply(GameComparison$First.Downs.Rush, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$First.Downs.Rush, function(x) sub(".*/", "", x))
+)
+
+GameComparison$UTKPassFirstDowns <- ifelse(
+  GameComparison$Location == "Home",
+  sapply(GameComparison$First.Downs.Pass, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$First.Downs.Pass, function(x) sub(".*/", "", x))
+)
+
+GameComparison$OppPassFirstDowns <- ifelse(
+  GameComparison$Location == "Away",
+  sapply(GameComparison$First.Downs.Pass, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$First.Downs.Pass, function(x) sub(".*/", "", x))
+)
+
+GameComparison$UTKPenaltyFirstDowns <- ifelse(
+  GameComparison$Location == "Home",
+  sapply(GameComparison$First.Downs.Pen, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$First.Downs.Pen, function(x) sub(".*/", "", x))
+)
+
+GameComparison$OppPenaltyFirstDowns <- ifelse(
+  GameComparison$Location == "Away",
+  sapply(GameComparison$First.Downs.Pen, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$First.Downs.Pen, function(x) sub(".*/", "", x))
+)
+
+GameComparison$UTKPassingYards <- ifelse(
+  GameComparison$Location == "Home",
+  sapply(GameComparison$Passing.Yards, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$Passing.Yards, function(x) sub(".*/", "", x))
+)
+
+GameComparison$OppPassingYards <- ifelse(
+  GameComparison$Location == "Away",
+  sapply(GameComparison$Passing.Yards, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$Passing.Yards, function(x) sub(".*/", "", x))
+)
+
+GameComparison$UTKPlays.Yards <- ifelse(
+  GameComparison$Location == "Home",
+  sapply(GameComparison$Plays.Yards, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$Plays.Yards, function(x) sub(".*/", "", x))
+)
+
+GameComparison$OppPlays.Yards <- ifelse(
+  GameComparison$Location == "Away",
+  sapply(GameComparison$Plays.Yards, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$Plays.Yards, function(x) sub(".*/", "", x))
+)
+
+GameComparison$UTKPlays <- sapply(GameComparison$UTKPlays.Yards , function(x) sub("-.*", "", x))
+GameComparison$OppPlays <- sapply(GameComparison$OppPlays.Yards , function(x) sub("-.*", "", x))
+GameComparison$UTKPlayYards <- sapply(GameComparison$UTKPlays.Yards , function(x) sub(".*-", "", x))
+GameComparison$OppPlayYards <- sapply(GameComparison$OppPlays.Yards , function(x) sub(".*-", "", x))
+  
+GameComparison$UTKReturnYards <- ifelse(
+  GameComparison$Location == "Home",
+  sapply(GameComparison$Return.Yards, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$Return.Yards, function(x) sub(".*/", "", x))
+)
+
+GameComparison$OppReturnYards <- ifelse(
+  GameComparison$Location == "Away",
+  sapply(GameComparison$Return.Yards, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$Return.Yards, function(x) sub(".*/", "", x))
+)
+
+GameComparison$UTKTurnovers <- ifelse(
+  GameComparison$Location == "Home",
+  sapply(GameComparison$Turnovers, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$Turnovers, function(x) sub(".*/", "", x))
+)
+
+GameComparison$OppTurnovers <- ifelse(
+  GameComparison$Location == "Away",
+  sapply(GameComparison$Turnovers, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$Turnovers, function(x) sub(".*/", "", x))
+)
+
+GameComparison$UTKRushing.Att.Yards <- ifelse(
+  GameComparison$Location == "Home",
+  sapply(GameComparison$Rushing.Att.Yards, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$Rushing.Att.Yards, function(x) sub(".*/", "", x))
+)
+
+GameComparison$OppRushing.Att.Yards <- ifelse(
+  GameComparison$Location == "Away",
+  sapply(GameComparison$Rushing.Att.Yards, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$Rushing.Att.Yards, function(x) sub(".*/", "", x))
+)
+
+GameComparison$UTKRushingAttempts<- sapply(GameComparison$UTKPlays.Yards , function(x) sub("-.*", "", x))
+GameComparison$OppRushingAttempts <- sapply(GameComparison$OppPlays.Yards , function(x) sub("-.*", "", x))
+GameComparison$UTKRushingYards <- sapply(GameComparison$UTKPlays.Yards , function(x) sub(".*-", "", x))
+GameComparison$OppRushingYards <- sapply(GameComparison$OppPlays.Yards , function(x) sub(".*-", "", x))
+
+GameComparison$UTKPassing.Comp.Att.Int <- ifelse(
+  GameComparison$Location == "Home",
+  sapply(GameComparison$Passing.Comp.Att.Int, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$Passing.Comp.Att.Int, function(x) sub(".*/", "", x))
+)
+
+GameComparison$OppPassing.Comp.Att.Int <- ifelse(
+  GameComparison$Location == "Away",
+  sapply(GameComparison$Passing.Comp.Att.Int, function(x) sub("/.*", "", x)),
+  sapply(GameComparison$Passing.Comp.Att.Int, function(x) sub(".*/", "", x))
+)
+
+GameComparison$UTKCompletePass<- sapply(GameComparison$UTKPassing.Comp.Att.Int , function(x) sub("-.*", "", x))
+GameComparison$OppCompletePass <- sapply(GameComparison$OppPassing.Comp.Att.Int , function(x) sub("-.*", "", x))
+GameComparison$UTKAttemptedPass <- sapply(GameComparison$UTKPassing.Comp.Att.Int , function(x) str_extract_all(x, "-(.*?)-"))
+GameComparison$UTKAttemptedPass <- gsub("-", "", GameComparison$UTKAttemptedPass)
+GameComparison$OppAttemptedPass <- sapply(GameComparison$OppPassing.Comp.Att.Int , function(x) str_extract_all(x, "-(.*?)-"))
+GameComparison$OppAttemptedPass <- gsub("-", "", GameComparison$OppAttemptedPass)
+GameComparison$UTKInterceptedPass <- sapply(GameComparison$UTKPassing.Comp.Att.Int , function(x) sub(".*-", "", x))
+GameComparison$OppInterceptedPass <- sapply(GameComparison$OppPassing.Comp.Att.Int , function(x) sub(".*-", "", x))
+
+GameComparison[2:12] <- c()
+colnames(GameComparison)
+GameComparison <- GameComparison[, !names(GameComparison) %in% c("UTKPlays.Yards","OppPlays.Yards","UTKRushing.Att.Yards","OppRushing.Att.Yards", "UTKPassing.Comp.Att.Int", "OppPassing.Comp.Att.Int")]
+
+#write.csv(GameComparison, "GameComparison.csv", row.names = FALSE)
+```
+
+```{r}
+GameComparison2 <- read.csv(file = "GameComparison2.csv")
+
+GameComparison2[GameComparison2 == ""] <- NA
+
+GameComparison2$Location <- GameResults$Location
+GameComparison2$Date  <- GameResults$Date
+GameComparison2$Result  <- GameResults$Result
+
+GameComparison2$UTKX3rd.Down.Conversions <- ifelse(
+  GameComparison2$Location == "Home",
+  sapply(GameComparison2$X3rd.Down.Conversions, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$X3rd.Down.Conversions, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$OppX3rd.Down.Conversions <- ifelse(
+  GameComparison2$Location == "Away",
+  sapply(GameComparison2$X3rd.Down.Conversions, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$X3rd.Down.Conversions, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$UTK3rdDownConversions <- sapply(GameComparison2$UTKX3rd.Down.Conversions , function(x) sub("-.*", "", x))
+GameComparison2$Opp3rdDownConversions <- sapply(GameComparison2$OppX3rd.Down.Conversions , function(x) sub("-.*", "", x))
+GameComparison2$UTK3rdDownConversions <- sapply(GameComparison2$UTKX3rd.Down.Conversions , function(x) sub(".*-", "", x))
+GameComparison2$Opp3rdDownConversions <- sapply(GameComparison2$OppX3rd.Down.Conversions , function(x) sub(".*-", "", x))
+
+GameComparison2$UTKX4th.Down.Conversions <- ifelse(
+  GameComparison2$Location == "Home",
+  sapply(GameComparison2$X4th.Down.Conversions, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$X4th.Down.Conversions, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$OppX4th.Down.Conversions <- ifelse(
+  GameComparison2$Location == "Away",
+  sapply(GameComparison2$X4th.Down.Conversions, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$X4th.Down.Conversions, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$UTK4thDownConversions <- sapply(GameComparison2$UTKX4th.Down.Conversions , function(x) sub("-.*", "", x))
+GameComparison2$Opp4thDownConversions <- sapply(GameComparison2$OppX4th.Down.Conversions , function(x) sub("-.*", "", x))
+GameComparison2$UTK4thDownConversions <- sapply(GameComparison2$UTKX4th.Down.Conversions , function(x) sub(".*-", "", x))
+GameComparison2$Opp4thDownConversions <- sapply(GameComparison2$OppX4th.Down.Conversions , function(x) sub(".*-", "", x))
+
+GameComparison2$UTKTimeOfPossession <- ifelse(
+  GameComparison2$Location == "Home",
+  sapply(GameComparison2$Time.Of.Possession, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$Time.Of.Possession, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$OppTimeOfPossession <- ifelse(
+  GameComparison2$Location == "Away",
+  sapply(GameComparison2$Time.Of.Possession, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$Time.Of.Possession, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$UTKTopMargin <- ifelse(
+  GameComparison2$Location == "Home",
+  sapply(GameComparison2$TOP.Margin, function(x) sub(":.*", "", x)),
+  sapply(GameComparison2$TOP.Margin, function(x) sub(".*:", "", x))
+)
+
+GameComparison2$OppTopMargin <- ifelse(
+  GameComparison2$Location == "Away",
+  sapply(GameComparison2$TOP.Margin, function(x) sub(":.*", "", x)),
+  sapply(GameComparison2$TOP.Margin, function(x) sub(".*:", "", x))
+)
+
+GameComparison2$UTKAvgRushYards <- ifelse(
+  GameComparison2$Location == "Home",
+  sapply(GameComparison2$Avg.Yards.Rush, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$Avg.Yards.Rush, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$OppAvgRushYards <- ifelse(
+  GameComparison2$Location == "Away",
+  sapply(GameComparison2$Avg.Yards.Rush, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$Avg.Yards.Rush, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$UTKAvgPassYards <- ifelse(
+  GameComparison2$Location == "Home",
+  sapply(GameComparison2$Avg.Yards.Pass, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$Avg.Yards.Pass, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$OppAvgPassYards <- ifelse(
+  GameComparison2$Location == "Away",
+  sapply(GameComparison2$Avg.Yards.Pass, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$Avg.Yards.Pass, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$UTKAvgPlayYards <- ifelse(
+  GameComparison2$Location == "Home",
+  sapply(GameComparison2$Avg.Yards.Play, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$Avg.Yards.Play, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$OppAvgPlayYards <- ifelse(
+  GameComparison2$Location == "Away",
+  sapply(GameComparison2$Avg.Yards.Play, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$Avg.Yards.Play, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$UTKPuntsNumAvg <- ifelse(
+  GameComparison2$Location == "Home",
+  sapply(GameComparison2$Punt.Num.Avg, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$Punt.Num.Avg, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$OppPuntsNumAvg <- ifelse(
+  GameComparison2$Location == "Away",
+  sapply(GameComparison2$Punt.Num.Avg, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$Punt.Num.Avg, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$UTKNumPunt <- sapply(GameComparison2$UTKPuntsNumAvg , function(x) sub("-.*", "", x))
+GameComparison2$OppNumPunt <- sapply(GameComparison2$OppPuntsNumAvg , function(x) sub("-.*", "", x))
+GameComparison2$UTKPuntAvgDist <- sapply(GameComparison2$UTKPuntsNumAvg , function(x) sub(".*-", "", x))
+GameComparison2$OppPuntAvgDist <- sapply(GameComparison2$OppPuntsNumAvg , function(x) sub(".*-", "", x))
+
+GameComparison2$UTKPenaltyNumYards <- ifelse(
+  GameComparison2$Location == "Home",
+  sapply(GameComparison2$Penalties.Num.Yards, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$Penalties.Num.Yards, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$OppPenaltyNumYards <- ifelse(
+  GameComparison2$Location == "Away",
+  sapply(GameComparison2$Penalties.Num.Yards, function(x) sub("/.*", "", x)),
+  sapply(GameComparison2$Penalties.Num.Yards, function(x) sub(".*/", "", x))
+)
+
+GameComparison2$UTKNumPenalty <- sapply(GameComparison2$UTKPenaltyNumYards , function(x) sub("-.*", "", x))
+GameComparison2$OppNumPenalty <- sapply(GameComparison2$OppPenaltyNumYards , function(x) sub("-.*", "", x))
+GameComparison2$UTKPenaltyYards <- sapply(GameComparison2$UTKPenaltyNumYards , function(x) sub(".*-", "", x))
+GameComparison2$OppPenaltyYards <- sapply(GameComparison2$OppPenaltyNumYards , function(x) sub(".*-", "", x))
+
+GameComparison2[2:10] <- c()
+colnames(GameComparison2)
+GameComparison2 <- GameComparison2[, !names(GameComparison2) %in% c("UTKX3rd.Down.Conversions", "OppX3rd.Down.Conversions", "UTKX4th.Down.Conversions", "OppX4th.Down.Conversions", "UTKPuntsNumAvg", "OppPuntsNumAvg", "UTKPenaltyNumYards", "OppPenaltyNumYards")]
+
+#write.csv(GameComparison2, "GameComparison2.csv", row.names = FALSE)
+```
+
+```{r}
+IndividualDefense <- read.csv(file = "IndividualDefense.csv")
+
+IndividualDefense[IndividualDefense == ""] <- NA
+
+IndividualDefense$TFL <- sapply(IndividualDefense$TFL.YDS, function(x) sub("-.*", "", x))
+IndividualDefense$TFLYards <- sapply(IndividualDefense$TFL.YDS, function(x) sub(".*-", "", x))
+
+IndividualDefense$Sacks <- sapply(IndividualDefense$Sacks.YDS, function(x) sub("-.*", "", x))
+IndividualDefense$SacksYards <- sapply(IndividualDefense$Sacks.YDS, function(x) sub(".*-", "", x))
+
+IndividualDefense[7:8] <- c()
+
+#write.csv(IndividualDefense, "IndividualDefense.csv", row.names = FALSE)
+```
+
+```{r}
+IndividualKickingFieldGoals <- read.csv(file = "IndividualKickingFieldGoals.csv")
+
+IndividualKickingFieldGoals[IndividualKickingFieldGoals == ""] <- NA
+
+IndividualKickingFieldGoals$FieldGoalsMade <- sapply(IndividualKickingFieldGoals$FGM.FGA , function(x) sub("-.*", "", x))
+IndividualKickingFieldGoals$FieldGoalsAttempted <- sapply(IndividualKickingFieldGoals$FGM.FGA , function(x) sub(".*-", "", x))
+
+IndividualKickingFieldGoals$PercentMade <- IndividualKickingFieldGoals$X..1
+
+IndividualKickingFieldGoals$MadeFrom20 <- sapply(IndividualKickingFieldGoals$I20 , function(x) sub("-.*", "", x))
+IndividualKickingFieldGoals$AttemptFrom20 <- sapply(IndividualKickingFieldGoals$I20 , function(x) sub(".*-", "", x))
+
+IndividualKickingFieldGoals$MadeFrom20to29 <- sapply(IndividualKickingFieldGoals$X20.29 , function(x) sub("-.*", "", x))
+IndividualKickingFieldGoals$AttemptFrom20to29 <- sapply(IndividualKickingFieldGoals$X20.29 , function(x) sub(".*-", "", x))
+
+IndividualKickingFieldGoals$MadeFrom30to39 <- sapply(IndividualKickingFieldGoals$X30.39 , function(x) sub("-.*", "", x))
+IndividualKickingFieldGoals$AttemptFrom30to39 <- sapply(IndividualKickingFieldGoals$X30.39 , function(x) sub(".*-", "", x))
+
+IndividualKickingFieldGoals$MadeFrom40to49 <- sapply(IndividualKickingFieldGoals$X40.49 , function(x) sub("-.*", "", x))
+IndividualKickingFieldGoals$AttemptFrom40to49 <- sapply(IndividualKickingFieldGoals$X40.49 , function(x) sub(".*-", "", x))
+
+IndividualKickingFieldGoals$MadeFrom50Plus <- sapply(IndividualKickingFieldGoals$X50. , function(x) sub("-.*", "", x))
+IndividualKickingFieldGoals$AttemptFrom50Plus <- sapply(IndividualKickingFieldGoals$X50. , function(x) sub(".*-", "", x))
+
+IndividualKickingFieldGoals[3:9] <- c()
+
+#write.csv(IndividualKickingFieldGoals, "IndividualKickingFieldGoals.csv", row.names = FALSE)
+```
+
+```{r}
+IndividualKickingKickoffs <- read.csv(file = "IndividualKickingKickoffs.csv")
+IndividualKickingKickoffs[IndividualKickingKickoffs == ""] <- NA
+
+#write.csv(IndividualKickingKickoffs, "IndividualKickingKickoffs.csv", row.names = FALSE)
+```
+
+```{r}
+IndividualKickingPunts <- read.csv(file = "IndividualKickingPunts.csv")
+IndividualKickingPunts[IndividualKickingPunts == ""] <- NA
+
+#write.csv(IndividualKickingPunts, "IndividualKickingPunts.csv", row.names = FALSE)
+```
+
+```{r}
+IndividualOffensePassing <- read.csv(file = "IndividualOffensePassing.csv")
+IndividualOffensePassing[IndividualOffensePassing == ""] <- NA
+
+#write.csv(IndividualOffensePassing, "IndividualOffensePassing.csv", row.names = FALSE)
+```
+
+```{r}
+IndividualOffenseReceiving <- read.csv(file = "IndividualOffenseReceiving.csv")
+IndividualOffenseReceiving[IndividualOffenseReceiving == ""] <- NA
+
+#write.csv(IndividualOffenseReceiving, "IndividualOffenseReceiving.csv", row.names = FALSE)
+```
+
+```{r}
+IndividualOffenseRushing <- read.csv(file = "IndividualOffenseRushing.csv")
+IndividualOffenseRushing[IndividualOffenseRushing == ""] <- NA
+
+#write.csv(IndividualOffenseRushing, "IndividualOffenseRushing.csv", row.names = FALSE)
+```
+
+```{r}
+IndividualReturnsKickoffs <- read.csv(file = "IndividualReturnsKickoffs.csv")
+IndividualReturnsKickoffs[IndividualReturnsKickoffs == ""] <- NA
+
+#write.csv(IndividualReturnsKickoffs, "IndividualReturnsKickoffs.csv", row.names = FALSE)
+```
+
+```{r}
+IndividualReturnsPunts <- read.csv(file = "IndividualReturnsPunts.csv")
+IndividualReturnsPunts[IndividualReturnsPunts == ""] <- NA
+
+#write.csv(IndividualReturnsPunts, "IndividualReturnsPunts.csv", row.names = FALSE)
+```
+
+```{r}
+IndividualScoring <- read.csv(file = "IndividualScoring.csv")
+IndividualScoring[IndividualScoring == ""] <- NA
+
+#write.csv(IndividualScoring, "IndividualScoring.csv", row.names = FALSE)
+```
+
+```{r}
+InsideOppRedZone <- read.csv(file = "InsideOppRedZone.csv")
+
+InsideOppRedZone[InsideOppRedZone == ""] <- NA
+
+InsideOppRedZone$UTKScore <- sapply(InsideOppRedZone$Score, function(x) sub("-.*", "", x))
+InsideOppRedZone$OppScore <- sapply(InsideOppRedZone$Score, function(x) sub(".*-", "", x))
+
+InsideOppRedZone$Month <- as.character(month(mdy(InsideOppRedZone$Date),label = TRUE))
+
+#write.csv(InsideOppRedZone, "InsideOppRedZone.csv", row.names = FALSE)
+```
+
+```{r}
+OppInsideOurRedZone <- read.csv(file = "OppInsideOurRedZone.csv")
+
+OppInsideOurRedZone[OppInsideOurRedZone == ""] <- NA
+
+OppInsideOurRedZone$UTKScore <- sapply(OppInsideOurRedZone$Score, function(x) sub("-.*", "", x))
+OppInsideOurRedZone$OppScore <- sapply(OppInsideOurRedZone$Score, function(x) sub(".*-", "", x))
+
+OppInsideOurRedZone$Month <- as.character(month(mdy(OppInsideOurRedZone$Date),label = TRUE))
+
+#write.csv(OppInsideOurRedZone, "OppInsideOurRedZone.csv", row.names = FALSE)
+```
+
+```{r}
+OpponentDefense <- read.csv(file = "OpponentDefense.csv")
+
+OpponentDefense[OpponentDefense == ""] <- NA
+
+OpponentDefense$Month <- as.character(month(mdy(OpponentDefense$Date),label = TRUE))
+
+#write.csv(OpponentDefense, "OpponentDefense.csv", row.names = FALSE)
+```
+
+```{r}
+OpponentKicking <- read.csv(file = "OpponentKicking.csv")
+
+OpponentKicking[OpponentKicking == ""] <- NA
+
+OpponentKicking$Month <- as.character(month(mdy(OpponentKicking$Date),label = TRUE))
+
+#write.csv(OpponentKicking, "OpponentKicking.csv", row.names = FALSE)
+```
+
+```{r}
+OpponentOffense <- read.csv(file = "OpponentOffense.csv")
+
+OpponentOffense[OpponentOffense == ""] <- NA
+
+OpponentOffense$Month <- as.character(month(mdy(OpponentOffense$Date),label = TRUE))
+
+#write.csv(OpponentOffense, "OpponentOffense.csv", row.names = FALSE)
+```
+
+```{r}
+Participation <- read.csv(file = "Participation.csv")
+
+Participation[Participation == ""] <- NA
+
+#write.csv(Participation, "Participation.csv", row.names = FALSE)
+```
+
+```{r}
+TeamDefense <- read.csv(file = "TeamDefense.csv")
+
+TeamDefense[TeamDefense == ""] <- NA
+
+TeamDefense$Month <- as.character(month(mdy(TeamDefense$Date),label = TRUE))
+
+#write.csv(TeamDefense, "TeamDefense.csv", row.names = FALSE)
+```
+
+```{r}
+TeamKicking <- read.csv(file = "TeamKicking.csv")
+
+TeamKicking[TeamKicking == ""] <- NA
+
+TeamKicking$Month <- as.character(month(mdy(TeamKicking$Date),label = TRUE))
+
+TeamKicking$FieldGoalsMade <- sapply(TeamKicking$Field.Goals.FGM.FGA, function(x) sub("-.*", "", x))
+TeamKicking$FieldGoalsAttempted <- sapply(TeamKicking$Field.Goals.FGM.FGA, function(x) sub(".*-", "", x))
+
+#write.csv(TeamKicking, "TeamKicking.csv", row.names = FALSE)
+```
+
+```{r}
+TeamOffense <- read.csv(file = "TeamOffense.csv")
+
+TeamOffense[TeamOffense == ""] <- NA
+
+TeamOffense$Month <- as.character(month(mdy(TeamOffense$Date),label = TRUE))
+
+#write.csv(TeamOffense, "TeamOffense.csv", row.names = FALSE)
+```
+
+```{r}
+TeamStats <- read.csv(file = "TeamStats.csv")
+
+TeamStats$Season <- as.character(TeamStats$Season)
+
+names(TeamStats) <- c("ScoringPointsPerGame","ScoringFirstDowns","FirstDownRushing","FirstDownPassing","FirstDownPenalty","FirstDownTotal","RushingYDSGained",
+                      "RushingYDSLost","RushingAttemps","RushingAvgPerAttempt","RushingAvgPerGame","RushingTouchdowns","RushingTotal","PassAttCompInt",
+                      "PassAvgPerAttempt","PassAvgPerGame","PassingTouchdown","PassingTotal","TotalOffensePlays","TotalOffenseAvgPerPlay",
+                      "TotalOffenseAvgPerGame","TotalOffenseYDS","TotalOffenseTouchdowns","ReturnsKickoffAvg","ReturnsKickoffTotal",
+                      "ReturnsPuntAvg","ReturnsPuntTotal","ReturnsINTAvg","ReturnsINTTotal","KickingPuntAvgYardsPerGame","KickingPuntNetAvg",
+                      "KickingPuntTotalYDS","KickingFGGoodAttempts","KickingOnsideKicks","PenalitiesAvgPerGameYDS","PenaltiesTotalYDS",
+                      "TimeofPossessionAvgPerGame", "TimeOfPossessionTotal","Misc3rdDownConversions","Misc4thDownConverstions","MiscFumblesLost",
+                      "MiscSacksYardsLost","MiscPATGoodAttempts","MiscYards","MiscRedZoneAttempt","MiscRedZoneTouchdowns","Season")
+
+TeamStats[TeamStats == ""] <- NA
+
+TeamStats$Team <- "x"
+TeamStats$Team[seq(1, nrow(TeamStats), by = 2)] <- "UTK"
+TeamStats$Team[seq(2, nrow(TeamStats), by = 2)] <- "Opp"
+
+TeamStats$PassingAttempts <- sapply(TeamStats$PassAttCompInt, function(x) sub("-.*", "", x))
+TeamStats$PassingComplete <- str_extract_all(TeamStats$PassAttCompInt, "-(.*?)-")
+TeamStats$PassingComplete <- substr(TeamStats$PassingComplete, start = 2, stop = nchar(TeamStats$PassingComplete) - 1)
+TeamStats$PassingIntercepted <- sapply(TeamStats$PassAttCompInt, function(x) sub(".*-", "", x))
+TeamStats$PassAttCompInt <- c()
+
+TeamStats$NumKickoffReturns <- sapply(TeamStats$ReturnsKickoffTotal, function(x) sub("-.*", "", x))
+TeamStats$KickoffReturnsYDS <- sapply(TeamStats$ReturnsKickoffTotal, function(x) sub(".*-", "", x))
+TeamStats$ReturnsKickoffTotal <- c()
+
+TeamStats$NumPuntReturns <- sapply(TeamStats$ReturnsPuntTotal, function(x) sub("-.*", "", x))
+TeamStats$PuntReturnsYDS <- sapply(TeamStats$ReturnsPuntTotal, function(x) sub(".*-", "", x))
+TeamStats$ReturnsPuntTotal <- c()
+
+TeamStats$NumINTReturns <- sapply(TeamStats$ReturnsINTTotal, function(x) sub("-.*", "", x))
+TeamStats$INTReturnsYDS <- sapply(TeamStats$ReturnsINTTotal, function(x) sub(".*-", "", x))
+TeamStats$ReturnsINTTotal <- c()
+
+TeamStats$NumKickingPunts <- sapply(TeamStats$KickingPuntTotalYDS, function(x) sub("-.*", "", x))
+TeamStats$KickingPuntsYDS <- sapply(TeamStats$KickingPuntTotalYDS, function(x) sub(".*-", "", x))
+TeamStats$KickingPuntTotalYDS <- c()
+
+TeamStats$NumFGMade <- sapply(TeamStats$KickingFGGoodAttempts, function(x) sub("-.*", "", x))
+TeamStats$NumFGAttempted <- sapply(TeamStats$KickingFGGoodAttempts, function(x) sub(".*-", "", x))
+TeamStats$KickingFGGoodAttempts <- c()
+
+TeamStats$NumPenalties <- sapply(TeamStats$PenaltiesTotalYDS, function(x) sub("-.*", "", x))
+TeamStats$PenaltyYDS <- sapply(TeamStats$PenaltiesTotalYDS, function(x) sub(".*-", "", x))
+TeamStats$PenaltiesTotalYDS <- c()
+
+TeamStats$TotalFumbles <- sapply(TeamStats$MiscFumblesLost, function(x) sub("-.*", "", x))
+TeamStats$FumblesLost <- sapply(TeamStats$MiscFumblesLost, function(x) sub(".*-", "", x))
+TeamStats$MiscFumblesLost <- c()
+
+TeamStats$NumSacks <- sapply(TeamStats$MiscSacksYardsLost, function(x) sub("-.*", "", x))
+TeamStats$SacksYDSLost <- sapply(TeamStats$MiscSacksYardsLost, function(x) sub(".*-", "", x))
+TeamStats$MiscSacksYardsLost <- c()
+
+
+#write.csv(TeamStats, "TeamStats.csv", row.names = FALSE)
+```
+
